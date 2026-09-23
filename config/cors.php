@@ -14,7 +14,8 @@ return [
     'allowed_origins' => [
         'http://localhost:5173',
         'http://localhost:5174',
-        'https://dasbordportfolio.vercel.app', // ✅ ajoute ton domaine Vercel
+        'https://dasbordportfolio.vercel.app', //  ajoute ton domaine Vercel
+        'https://frank-landry-portfolio.vercel.app', // ajoute ton portfolio
     ],
 
     'allowed_headers' => ['*'],
@@ -23,5 +24,5 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true, // ✅ obligatoire pour cookies httpOnly
+    'supports_credentials' => true, //  obligatoire pour cookies httpOnly
 ];

@@ -20,8 +20,9 @@ class ArticleController extends Controller
 
         $articles = Article::orderBy('created_at', 'desc')
             ->paginate($perPage);
+        return response()->json($articles, 200, [], JSON_UNESCAPED_UNICODE);
 
-        return response()->json($articles);
+
     }
 
     // =====================================================
@@ -51,7 +52,7 @@ class ArticleController extends Controller
             ];
         });
 
-        return response()->json(['data' => $articles], 200);
+         return response()->json(['data' => $articles], 200, [], JSON_UNESCAPED_UNICODE);
     }
 
 
@@ -111,9 +112,9 @@ public function store(Request $request)
     ]);
 
     return response()->json([
-        'message' => 'Article publié avec succès',
-        'article' => $article->fresh(),
-    ], 201);
+    'message' => 'Article publié avec succès',
+    'article' => $article->fresh(),
+    ], 201, [], JSON_UNESCAPED_UNICODE);
 }
 
 // =====================================================
@@ -165,9 +166,9 @@ public function update(Request $request, Article $article)
     ]);
 
     return response()->json([
-        'message' => 'Article modifié avec succès',
-        'article' => $article->fresh(),
-    ], 200);
+    'message' => 'Article modifié avec succès',
+    'article' => $article->fresh(),
+    ], 200, [], JSON_UNESCAPED_UNICODE);
 }
 
 // =====================================================
@@ -197,7 +198,8 @@ public function translate(Article $article)
         return response()->json([
             'message' => 'Article traduit avec succès',
             'article' => $article->fresh(),
-        ], 200);
+        ], 200, [], JSON_UNESCAPED_UNICODE);
+
 
     } catch (\Throwable $e) {
 
@@ -209,7 +211,8 @@ public function translate(Article $article)
         return response()->json([
             'message' => 'Impossible de traduire l’article.',
             'error' => $e->getMessage(),
-        ], 500);
+        ], 500, [], JSON_UNESCAPED_UNICODE);
+
     }
 }
 
@@ -242,7 +245,9 @@ public function translate(Article $article)
 
         return response()->json([
             'message' => 'Article supprimé avec succès'
-        ]);
+        ], 200, [], JSON_UNESCAPED_UNICODE);
+
+
     }
 
 
@@ -269,7 +274,7 @@ public function translate(Article $article)
         return response()->json([
             'message' => 'Article archivé',
             'article' => $article
-        ]);
+        ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 
 
@@ -296,7 +301,8 @@ public function translate(Article $article)
         return response()->json([
             'message' => 'Article désarchivé',
             'article' => $article
-        ]);
+        ], 200, [], JSON_UNESCAPED_UNICODE);
+
     }
 
 
@@ -433,6 +439,6 @@ public function translate(Article $article)
             // Graphique catégories
             'articlesByCategory' => $articlesByCategory,
 
-        ]);
+       ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 }

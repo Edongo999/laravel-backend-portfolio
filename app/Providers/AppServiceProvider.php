@@ -19,16 +19,18 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
+
     public function boot(): void
-    {
-        // Fix pour éviter l'erreur "clé trop longue"
-        Schema::defaultStringLength(191);
+        {
+            // Fix pour éviter l'erreur "clé trop longue"
+            Schema::defaultStringLength(191);
 
-          //  Forcer l'encodage UTF-8 dans toutes les réponses
-         header('Content-Type: text/html; charset=UTF-8');
+            //  Forcer l'encodage UTF-8 pour les réponses JSON
+            header('Content-Type: application/json; charset=UTF-8');
 
-        ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
-            return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
-        });
-    }
+            ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
+                return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
+            });
+        }
+
 }
