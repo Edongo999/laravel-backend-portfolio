@@ -13,7 +13,7 @@ class UserController extends Controller
     public function profile(Request $request)
     {
         $user = $request->user();
-        $user->image = $user->image ? Storage::url($user->image) : null;
+        $user->image = $user->image ? asset('storage/' . $user->image) : null;
 
         return response()->json([
             'status' => 'success',
@@ -39,7 +39,7 @@ class UserController extends Controller
             'user_id' => $user->id,
         ]);
 
-        $user->image = $user->image ? Storage::url($user->image) : null;
+        $user->image = $user->image ? asset('storage/' . $user->image) : null;
 
         return response()->json([
             'message' => 'Nom mis à jour avec succès',
@@ -67,7 +67,8 @@ class UserController extends Controller
             'user_id' => $user->id,
         ]);
 
-        $user->image = Storage::url($user->image);
+        // ✅ Correction : URL complète
+        $user->image = $user->image ? asset('storage/' . $user->image) : null;
 
         return response()->json([
             'message' => 'Photo mise à jour avec succès',
