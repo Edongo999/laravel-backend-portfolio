@@ -11,50 +11,56 @@ use Stichoza\GoogleTranslate\GoogleTranslate;
 class ArticleController extends Controller
 {
 
-  // =====================================================
-    // LISTE PAGINÉE (Dashboard)
-    // =====================================================
-    public function index(Request $request)
-    {
-        $perPage = $request->get('per_page', 10);
+        // =====================================================
+        // LISTE PAGINÉE (Dashboard)
+        // =====================================================
+        public function index(Request $request)
+        {
+            $perPage = $request->get('per_page', 10);
 
-        $articles = Article::orderBy('created_at', 'desc')
-            ->paginate($perPage);
-        return response()->json($articles, 200, [], JSON_UNESCAPED_UNICODE);
+            $articles = Article::orderBy('created_at', 'desc')
+                ->paginate($perPage);
+
+            // Transformer les images en URL publique
+            $articles->getCollection()->transform(function ($article) {
+                $article->image = $article->image ? asset('storage/' . $article->image) : null;
+                return $article;
+            });
+
+            return response()->json($articles, 200, [], JSON_UNESCAPED_UNICODE);
+        }
 
 
-    }
+            // =====================================================
+        // LISTE SIMPLE (Portfolio public)
+        // =====================================================
+        public function publicIndex(Request $request)
+        {
+            $lang = $request->get('lang', 'fr'); // par défaut français
 
-    // =====================================================
-    // LISTE SIMPLE (Portfolio public)
-    // =====================================================
-    public function publicIndex(Request $request)
-    {
-        $lang = $request->get('lang', 'fr'); // par défaut français
+            $articles = Article::where('archived', 0)
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-        $articles = Article::where('archived', 0)
-            ->orderBy('created_at', 'desc')
-            ->get();
+            $articles = $articles->map(function ($article) use ($lang) {
+                return [
+                    'id' => $article->id,
+                    // ✅ Fallback : si la traduction est vide, on prend la version FR ou le champ original
+                    'title' => $lang === 'en'
+                        ? ($article->title_en ?? $article->title_fr ?? $article->title)
+                        : ($article->title_fr ?? $article->title),
+                    'content' => $lang === 'en'
+                        ? ($article->content_en ?? $article->content_fr ?? $article->content)
+                        : ($article->content_fr ?? $article->content),
+                    'category' => $article->category,
+                    // ✅ Correction : URL complète en HTTPS depuis Render
+                    'image' => $article->image ? asset('storage/' . $article->image) : null,
+                    'created_at' => $article->created_at,
+                ];
+            });
 
-        $articles = $articles->map(function ($article) use ($lang) {
-            return [
-                'id' => $article->id,
-                // ✅ Fallback : si la traduction est vide, on prend la version FR ou le champ original
-                'title' => $lang === 'en'
-                    ? ($article->title_en ?? $article->title_fr ?? $article->title)
-                    : ($article->title_fr ?? $article->title),
-                'content' => $lang === 'en'
-                    ? ($article->content_en ?? $article->content_fr ?? $article->content)
-                    : ($article->content_fr ?? $article->content),
-                'category' => $article->category,
-                'image' => $article->image,
-                'created_at' => $article->created_at,
-            ];
-        });
-
-         return response()->json(['data' => $articles], 200, [], JSON_UNESCAPED_UNICODE);
-    }
-
+            return response()->json(['data' => $articles], 200, [], JSON_UNESCAPED_UNICODE);
+        }
 
 
  // =====================================================
@@ -81,11 +87,7 @@ public function store(Request $request)
     }
 
     // Données de base
-    $data = $request->only(
-        'title',
-        'content',
-        'category'
-    );
+    $data = $request->only('title', 'content', 'category');
 
     // Version française
     $data['title_fr'] = $request->title;
@@ -97,8 +99,7 @@ public function store(Request $request)
 
     // Upload de l'image
     if ($request->hasFile('image')) {
-        $data['image'] = $request->file('image')
-            ->store('articles', 'public');
+        $data['image'] = $request->file('image')->store('articles', 'public');
     }
 
     // Création immédiate
@@ -111,9 +112,12 @@ public function store(Request $request)
         'user_id' => $request->user()->id,
     ]);
 
+    // ✅ Correction : transformer l’URL de l’image
+    $article->image = $article->image ? asset('storage/' . $article->image) : null;
+
     return response()->json([
-    'message' => 'Article publié avec succès',
-    'article' => $article->fresh(),
+        'message' => 'Article publié avec succès',
+        'article' => $article->fresh(),
     ], 201, [], JSON_UNESCAPED_UNICODE);
 }
 
@@ -130,11 +134,7 @@ public function update(Request $request, Article $article)
     ]);
 
     // Données de base
-    $data = $request->only(
-        'title',
-        'content',
-        'category'
-    );
+    $data = $request->only('title', 'content', 'category');
 
     // Nouvelle version française
     $data['title_fr'] = $request->title;
@@ -146,13 +146,10 @@ public function update(Request $request, Article $article)
 
     // Remplacer l'image si nécessaire
     if ($request->hasFile('image')) {
-
         if ($article->image) {
             Storage::disk('public')->delete($article->image);
         }
-
-        $data['image'] = $request->file('image')
-            ->store('articles', 'public');
+        $data['image'] = $request->file('image')->store('articles', 'public');
     }
 
     // Mise à jour immédiate
@@ -165,12 +162,14 @@ public function update(Request $request, Article $article)
         'user_id' => $request->user()->id,
     ]);
 
+    // ✅ Correction : transformer l’URL de l’image
+    $article->image = $article->image ? asset('storage/' . $article->image) : null;
+
     return response()->json([
-    'message' => 'Article modifié avec succès',
-    'article' => $article->fresh(),
+        'message' => 'Article modifié avec succès',
+        'article' => $article->fresh(),
     ], 200, [], JSON_UNESCAPED_UNICODE);
 }
-
 // =====================================================
 // TRADUIRE UN ARTICLE EN ANGLAIS
 // =====================================================
@@ -184,25 +183,22 @@ public function translate(Article $article)
         $article->content_fr = $article->content;
 
         // Traduction du titre
-        $article->title_en = $trEn->translate(
-            $article->title_fr
-        );
+        $article->title_en = $trEn->translate($article->title_fr);
 
         // Traduction du contenu
-        $article->content_en = $trEn->translate(
-            $article->content_fr
-        );
+        $article->content_en = $trEn->translate($article->content_fr);
 
         $article->save();
+
+        // ✅ Correction : transformer l’URL de l’image
+        $article->image = $article->image ? asset('storage/' . $article->image) : null;
 
         return response()->json([
             'message' => 'Article traduit avec succès',
             'article' => $article->fresh(),
         ], 200, [], JSON_UNESCAPED_UNICODE);
 
-
     } catch (\Throwable $e) {
-
         \Log::error('Erreur de traduction', [
             'article_id' => $article->id,
             'error' => $e->getMessage(),
@@ -212,9 +208,9 @@ public function translate(Article $article)
             'message' => 'Impossible de traduire l’article.',
             'error' => $e->getMessage(),
         ], 500, [], JSON_UNESCAPED_UNICODE);
-
     }
 }
+
 
     // =====================================================
     // SUPPRIMER UN ARTICLE
@@ -255,55 +251,53 @@ public function translate(Article $article)
     // ARCHIVER UN ARTICLE
     // =====================================================
 
-    public function archive(Article $article, Request $request)
-    {
-        $article->update([
-            'archived' => true
-        ]);
+   public function archive(Article $article, Request $request)
+{
+    $article->update([
+        'archived' => true
+    ]);
 
-        // =================================================
-        // NOTIFICATION
-        // =================================================
+    Notification::create([
+        'type' => 'article',
+        'message' => 'Article archivé : ' . $article->title,
+        'user_id' => $request->user()->id,
+    ]);
 
-        Notification::create([
-            'type' => 'article',
-            'message' => 'Article archivé : ' . $article->title,
-            'user_id' => $request->user()->id,
-        ]);
+    // ✅ Correction : transformer l’URL de l’image
+    $article->image = $article->image ? asset('storage/' . $article->image) : null;
 
-        return response()->json([
-            'message' => 'Article archivé',
-            'article' => $article
-        ], 200, [], JSON_UNESCAPED_UNICODE);
-    }
+    return response()->json([
+        'message' => 'Article archivé',
+        'article' => $article->fresh(),
+    ], 200, [], JSON_UNESCAPED_UNICODE);
+}
 
 
     // =====================================================
     // DÉSARCHIVER UN ARTICLE
     // =====================================================
 
-    public function unarchive(Article $article, Request $request)
-    {
-        $article->update([
-            'archived' => false
-        ]);
+  public function unarchive(Article $article, Request $request)
+{
+    $article->update([
+        'archived' => false
+    ]);
 
-        // =================================================
-        // NOTIFICATION
-        // =================================================
+    Notification::create([
+        'type' => 'article',
+        'message' => 'Article désarchivé : ' . $article->title,
+        'user_id' => $request->user()->id,
+    ]);
 
-        Notification::create([
-            'type' => 'article',
-            'message' => 'Article désarchivé : ' . $article->title,
-            'user_id' => $request->user()->id,
-        ]);
+    // ✅ Correction : transformer l’URL de l’image
+    $article->image = $article->image ? asset('storage/' . $article->image) : null;
 
-        return response()->json([
-            'message' => 'Article désarchivé',
-            'article' => $article
-        ], 200, [], JSON_UNESCAPED_UNICODE);
+    return response()->json([
+        'message' => 'Article désarchivé',
+        'article' => $article->fresh(),
+    ], 200, [], JSON_UNESCAPED_UNICODE);
+}
 
-    }
 
 
     // =====================================================
