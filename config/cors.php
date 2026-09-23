@@ -15,7 +15,7 @@ return [
         'http://localhost:5173',
         'http://localhost:5174',
         'https://dasbordportfolio.vercel.app', //  ajoute ton domaine Vercel
-        'https://frank-landry-portfolio.vercel.app', // ajoute ton portfolio
+        'https://portfolio-frank-landry.vercel.app', // ✅ ton vrai domaine Vercel
     ],
 
     'allowed_headers' => ['*'],
