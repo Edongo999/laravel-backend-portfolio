@@ -7,6 +7,8 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Stichoza\GoogleTranslate\GoogleTranslate;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ArticleController extends Controller
 {
@@ -62,9 +64,8 @@ public function publicIndex(Request $request)
     return response()->json(['data' => $articles], 200, [], JSON_UNESCAPED_UNICODE);
 }
 
-
 // =====================================================
-// PUBLIER UN ARTICLE (Supabase Storage)
+// publier UN ARTICLE (Supabase Storage)
 // =====================================================
 public function store(Request $request)
 {
@@ -88,12 +89,8 @@ public function store(Request $request)
 
     // Données de base
     $data = $request->only('title', 'content', 'category');
-
-    // Version française
     $data['title_fr'] = $request->title;
     $data['content_fr'] = $request->content;
-
-    // Pas encore de traduction anglaise
     $data['title_en'] = null;
     $data['content_en'] = null;
 
@@ -104,12 +101,15 @@ public function store(Request $request)
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.env('SUPABASE_KEY'),
-            'Content-Type' => 'multipart/form-data',
         ])->attach(
             'file', file_get_contents($file), $fileName
         )->post(env('SUPABASE_URL').'/storage/v1/object/articles/'.$fileName);
 
         if ($response->failed()) {
+            Log::error('Upload Supabase échoué', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
             return response()->json(['error' => 'Upload vers Supabase échoué'], 500);
         }
 
@@ -164,12 +164,15 @@ public function update(Request $request, Article $article)
         // Upload vers Supabase Storage (bucket articles)
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.env('SUPABASE_KEY'),
-            'Content-Type' => 'multipart/form-data',
         ])->attach(
             'file', file_get_contents($file), $fileName
         )->post(env('SUPABASE_URL').'/storage/v1/object/articles/'.$fileName);
 
         if ($response->failed()) {
+            Log::error('Upload Supabase échoué lors de la modification', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
             return response()->json(['error' => 'Upload vers Supabase échoué'], 500);
         }
 

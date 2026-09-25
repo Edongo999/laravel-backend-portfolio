@@ -28,6 +28,18 @@ return [
     |
     */
 
+    'supabase' => [
+    'driver' => 's3',
+    'key' => env('SUPABASE_KEY'),
+    'secret' => env('SUPABASE_KEY'), // Supabase utilise la même clé pour key et secret
+    'region' => 'us-east-1', // valeur par défaut, Supabase n’utilise pas vraiment la région
+    'bucket' => 'articles', // ton bucket Supabase
+    'url' => env('SUPABASE_URL') . '/storage/v1/object/public/articles',
+    'endpoint' => env('SUPABASE_URL') . '/storage/v1/s3',
+    'use_path_style_endpoint' => true,
+],
+
+
     'disks' => [
 
         'local' => [
