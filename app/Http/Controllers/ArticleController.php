@@ -11,60 +11,60 @@ use Stichoza\GoogleTranslate\GoogleTranslate;
 class ArticleController extends Controller
 {
 
-        // =====================================================
-        // LISTE PAGINÉE (Dashboard)
-        // =====================================================
-        public function index(Request $request)
-        {
-            $perPage = $request->get('per_page', 10);
+    // =====================================================
+// LISTE PAGINÉE (Dashboard) - Supabase Storage
+// =====================================================
+public function index(Request $request)
+{
+    $perPage = $request->get('per_page', 10);
 
-            $articles = Article::orderBy('created_at', 'desc')
-                ->paginate($perPage);
+    $articles = Article::orderBy('created_at', 'desc')
+        ->paginate($perPage);
 
-            // Transformer les images en URL publique
-            $articles->getCollection()->transform(function ($article) {
-                $article->image = $article->image ? asset('storage/' . $article->image) : null;
-                return $article;
-            });
+    // ✅ L'image est déjà une URL publique Supabase
+    $articles->getCollection()->transform(function ($article) {
+        $article->image = $article->image ?: null;
+        return $article;
+    });
 
-            return response()->json($articles, 200, [], JSON_UNESCAPED_UNICODE);
-        }
-
-
-            // =====================================================
-        // LISTE SIMPLE (Portfolio public)
-        // =====================================================
-        public function publicIndex(Request $request)
-        {
-            $lang = $request->get('lang', 'fr'); // par défaut français
-
-            $articles = Article::where('archived', 0)
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            $articles = $articles->map(function ($article) use ($lang) {
-                return [
-                    'id' => $article->id,
-                    // ✅ Fallback : si la traduction est vide, on prend la version FR ou le champ original
-                    'title' => $lang === 'en'
-                        ? ($article->title_en ?? $article->title_fr ?? $article->title)
-                        : ($article->title_fr ?? $article->title),
-                    'content' => $lang === 'en'
-                        ? ($article->content_en ?? $article->content_fr ?? $article->content)
-                        : ($article->content_fr ?? $article->content),
-                    'category' => $article->category,
-                    // ✅ Correction : URL complète en HTTPS depuis Render
-                    'image' => $article->image ? asset('storage/' . $article->image) : null,
-                    'created_at' => $article->created_at,
-                ];
-            });
-
-            return response()->json(['data' => $articles], 200, [], JSON_UNESCAPED_UNICODE);
-        }
+    return response()->json($articles, 200, [], JSON_UNESCAPED_UNICODE);
+}
 
 
- // =====================================================
-// PUBLIER UN ARTICLE
+// =====================================================
+// LISTE SIMPLE (Portfolio public) - Supabase Storage
+// =====================================================
+public function publicIndex(Request $request)
+{
+    $lang = $request->get('lang', 'fr'); // par défaut français
+
+    $articles = Article::where('archived', 0)
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    $articles = $articles->map(function ($article) use ($lang) {
+        return [
+            'id' => $article->id,
+            // ✅ Fallback : si la traduction est vide, on prend la version FR ou le champ original
+            'title' => $lang === 'en'
+                ? ($article->title_en ?? $article->title_fr ?? $article->title)
+                : ($article->title_fr ?? $article->title),
+            'content' => $lang === 'en'
+                ? ($article->content_en ?? $article->content_fr ?? $article->content)
+                : ($article->content_fr ?? $article->content),
+            'category' => $article->category,
+            // ✅ L'image est déjà une URL publique Supabase
+            'image' => $article->image ?: null,
+            'created_at' => $article->created_at,
+        ];
+    });
+
+    return response()->json(['data' => $articles], 200, [], JSON_UNESCAPED_UNICODE);
+}
+
+
+// =====================================================
+// PUBLIER UN ARTICLE (Supabase Storage)
 // =====================================================
 public function store(Request $request)
 {
@@ -72,7 +72,7 @@ public function store(Request $request)
         'title'    => 'required|string|max:255',
         'content'  => 'required|string',
         'category' => 'required|string|in:Tech,Design,Actu',
-        'image'    => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
+        'image'    => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,mp4|max:51200', // 50 MB max
     ]);
 
     // Vérifier si l'article existe déjà
@@ -97,9 +97,24 @@ public function store(Request $request)
     $data['title_en'] = null;
     $data['content_en'] = null;
 
-    // Upload de l'image
+    // Upload de l'image vers Supabase Storage
     if ($request->hasFile('image')) {
-        $data['image'] = $request->file('image')->store('articles', 'public');
+        $file = $request->file('image');
+        $fileName = uniqid().'.'.$file->getClientOriginalExtension();
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.env('SUPABASE_KEY'),
+            'Content-Type' => 'multipart/form-data',
+        ])->attach(
+            'file', file_get_contents($file), $fileName
+        )->post(env('SUPABASE_URL').'/storage/v1/object/articles/'.$fileName);
+
+        if ($response->failed()) {
+            return response()->json(['error' => 'Upload vers Supabase échoué'], 500);
+        }
+
+        // URL publique Supabase
+        $data['image'] = env('SUPABASE_URL').'/storage/v1/object/public/articles/'.$fileName;
     }
 
     // Création immédiate
@@ -112,9 +127,6 @@ public function store(Request $request)
         'user_id' => $request->user()->id,
     ]);
 
-    // ✅ Correction : transformer l’URL de l’image
-    $article->image = $article->image ? asset('storage/' . $article->image) : null;
-
     return response()->json([
         'message' => 'Article publié avec succès',
         'article' => $article->fresh(),
@@ -122,7 +134,7 @@ public function store(Request $request)
 }
 
 // =====================================================
-// MODIFIER UN ARTICLE
+// MODIFIER UN ARTICLE (Supabase Storage)
 // =====================================================
 public function update(Request $request, Article $article)
 {
@@ -130,7 +142,7 @@ public function update(Request $request, Article $article)
         'title'    => 'required|string|max:255',
         'content'  => 'required|string',
         'category' => 'required|string|in:Tech,Design,Actu',
-        'image'    => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
+        'image'    => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,mp4|max:51200', // 50 MB max
     ]);
 
     // Données de base
@@ -146,10 +158,23 @@ public function update(Request $request, Article $article)
 
     // Remplacer l'image si nécessaire
     if ($request->hasFile('image')) {
-        if ($article->image) {
-            Storage::disk('public')->delete($article->image);
+        $file = $request->file('image');
+        $fileName = uniqid().'.'.$file->getClientOriginalExtension();
+
+        // Upload vers Supabase Storage (bucket articles)
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.env('SUPABASE_KEY'),
+            'Content-Type' => 'multipart/form-data',
+        ])->attach(
+            'file', file_get_contents($file), $fileName
+        )->post(env('SUPABASE_URL').'/storage/v1/object/articles/'.$fileName);
+
+        if ($response->failed()) {
+            return response()->json(['error' => 'Upload vers Supabase échoué'], 500);
         }
-        $data['image'] = $request->file('image')->store('articles', 'public');
+
+        // URL publique Supabase
+        $data['image'] = env('SUPABASE_URL').'/storage/v1/object/public/articles/'.$fileName;
     }
 
     // Mise à jour immédiate
@@ -162,96 +187,58 @@ public function update(Request $request, Article $article)
         'user_id' => $request->user()->id,
     ]);
 
-    // ✅ Correction : transformer l’URL de l’image
-    $article->image = $article->image ? asset('storage/' . $article->image) : null;
-
     return response()->json([
         'message' => 'Article modifié avec succès',
         'article' => $article->fresh(),
     ], 200, [], JSON_UNESCAPED_UNICODE);
 }
+
+   // =====================================================
+// SUPPRIMER UN ARTICLE (Supabase Storage)
 // =====================================================
-// TRADUIRE UN ARTICLE EN ANGLAIS
-// =====================================================
-public function translate(Article $article)
+public function destroy(Article $article, Request $request)
 {
-    try {
-        $trEn = new GoogleTranslate('en');
+    // Garder le titre avant suppression
+    $articleTitle = $article->title;
 
-        // S'assurer que le français existe
-        $article->title_fr = $article->title;
-        $article->content_fr = $article->content;
+    // Supprimer l'image dans Supabase si elle existe
+    if ($article->image) {
+        // Extraire le nom du fichier depuis l'URL publique Supabase
+        $filePath = basename($article->image);
 
-        // Traduction du titre
-        $article->title_en = $trEn->translate($article->title_fr);
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.env('SUPABASE_KEY'),
+        ])->delete(env('SUPABASE_URL').'/storage/v1/object/articles/'.$filePath);
 
-        // Traduction du contenu
-        $article->content_en = $trEn->translate($article->content_fr);
-
-        $article->save();
-
-        // ✅ Correction : transformer l’URL de l’image
-        $article->image = $article->image ? asset('storage/' . $article->image) : null;
-
-        return response()->json([
-            'message' => 'Article traduit avec succès',
-            'article' => $article->fresh(),
-        ], 200, [], JSON_UNESCAPED_UNICODE);
-
-    } catch (\Throwable $e) {
-        \Log::error('Erreur de traduction', [
-            'article_id' => $article->id,
-            'error' => $e->getMessage(),
-        ]);
-
-        return response()->json([
-            'message' => 'Impossible de traduire l’article.',
-            'error' => $e->getMessage(),
-        ], 500, [], JSON_UNESCAPED_UNICODE);
+        if ($response->failed()) {
+            \Log::error('Erreur suppression image Supabase', [
+                'file' => $filePath,
+                'error' => $response->body(),
+            ]);
+        }
     }
+
+    // Supprimer l'article
+    $article->delete();
+
+    // Notification
+    Notification::create([
+        'type' => 'article',
+        'message' => 'Article supprimé : ' . $articleTitle,
+        'user_id' => $request->user()->id,
+    ]);
+
+    return response()->json([
+        'message' => 'Article supprimé avec succès'
+    ], 200, [], JSON_UNESCAPED_UNICODE);
 }
 
 
-    // =====================================================
-    // SUPPRIMER UN ARTICLE
-    // =====================================================
 
-    public function destroy(Article $article, Request $request)
-    {
-        // Garder le titre avant suppression
-        $articleTitle = $article->title;
-
-        // Supprimer l'image
-        if ($article->image) {
-            Storage::disk('public')->delete($article->image);
-        }
-
-        // Supprimer l'article
-        $article->delete();
-
-        // =================================================
-        // NOTIFICATION
-        // =================================================
-
-        Notification::create([
-            'type' => 'article',
-            'message' => 'Article supprimé : ' . $articleTitle,
-            'user_id' => $request->user()->id,
-        ]);
-
-        return response()->json([
-            'message' => 'Article supprimé avec succès'
-        ], 200, [], JSON_UNESCAPED_UNICODE);
-
-
-    }
-
-
-    // =====================================================
-    // ARCHIVER UN ARTICLE
-    // =====================================================
-
-   public function archive(Article $article, Request $request)
+   // =====================================================
+// ARCHIVER UN ARTICLE (Supabase Storage)
+// =====================================================
+public function archive(Article $article, Request $request)
 {
     $article->update([
         'archived' => true
@@ -263,21 +250,17 @@ public function translate(Article $article)
         'user_id' => $request->user()->id,
     ]);
 
-    // ✅ Correction : transformer l’URL de l’image
-    $article->image = $article->image ? asset('storage/' . $article->image) : null;
-
+    //  L'image est déjà une URL publique Supabase, inutile de transformer
     return response()->json([
         'message' => 'Article archivé',
         'article' => $article->fresh(),
     ], 200, [], JSON_UNESCAPED_UNICODE);
 }
 
-
-    // =====================================================
-    // DÉSARCHIVER UN ARTICLE
-    // =====================================================
-
-  public function unarchive(Article $article, Request $request)
+// =====================================================
+// DÉSARCHIVER UN ARTICLE (Supabase Storage)
+// =====================================================
+public function unarchive(Article $article, Request $request)
 {
     $article->update([
         'archived' => false
@@ -289,9 +272,7 @@ public function translate(Article $article)
         'user_id' => $request->user()->id,
     ]);
 
-    // ✅ Correction : transformer l’URL de l’image
-    $article->image = $article->image ? asset('storage/' . $article->image) : null;
-
+    // ✅ L'image est déjà une URL publique Supabase, inutile de transformer
     return response()->json([
         'message' => 'Article désarchivé',
         'article' => $article->fresh(),
