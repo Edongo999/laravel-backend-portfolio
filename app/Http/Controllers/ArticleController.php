@@ -47,7 +47,6 @@ public function publicIndex(Request $request)
     $articles = $articles->map(function ($article) use ($lang) {
         return [
             'id' => $article->id,
-            // ✅ Fallback : si la traduction est vide, on prend la version FR ou le champ original
             'title' => $lang === 'en'
                 ? ($article->title_en ?? $article->title_fr ?? $article->title)
                 : ($article->title_fr ?? $article->title),
@@ -55,14 +54,17 @@ public function publicIndex(Request $request)
                 ? ($article->content_en ?? $article->content_fr ?? $article->content)
                 : ($article->content_fr ?? $article->content),
             'category' => $article->category,
-            // ✅ L'image est déjà une URL publique Supabase
-            'image' => $article->image ?: null,
+            // ✅ URL complète vers l’image
+            'image' => $article->image
+                ? asset('storage/' . $article->image)
+                : null,
             'created_at' => $article->created_at,
         ];
     });
 
     return response()->json(['data' => $articles], 200, [], JSON_UNESCAPED_UNICODE);
 }
+
 
 // =====================================================
 // publier UN ARTICLE (Supabase Storage)

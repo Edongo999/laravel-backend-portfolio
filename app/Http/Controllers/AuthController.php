@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -24,35 +26,96 @@ class AuthController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $imagePath = null;
+        $imageUrl = null;
+
+        // =================================================
+        // UPLOAD PHOTO VERS SUPABASE
+        // =================================================
 
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('users', 'public');
+
+            $file = $request->file('image');
+
+            $extension = $file->getClientOriginalExtension();
+
+            $fileName =
+                'user_' .
+                uniqid() .
+                '.' .
+                $extension;
+
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('SUPABASE_KEY'),
+            ])->attach(
+                'file',
+                file_get_contents($file),
+                $fileName
+            )->post(
+                env('SUPABASE_URL') .
+                '/storage/v1/object/users/' .
+                $fileName
+            );
+
+
+            if ($response->failed()) {
+
+                Log::error(
+                    'Upload photo utilisateur lors de l\'inscription échoué',
+                    [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]
+                );
+
+                return response()->json([
+                    'message' =>
+                        'Impossible d\'envoyer la photo vers Supabase.',
+                ], 500);
+            }
+
+
+            $imageUrl =
+                env('SUPABASE_URL') .
+                '/storage/v1/object/public/users/' .
+                $fileName;
         }
+
+
+        // =================================================
+        // CRÉATION UTILISATEUR
+        // =================================================
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'image' => $imagePath,
+            'image' => $imageUrl,
         ]);
 
-        $user->image_url = $user->image
-            ? asset('storage/' . $user->image)
-            : null;
 
         // =================================================
-        // CRÉATION DU TOKEN SANCTUM
+        // IMAGE URL
         // =================================================
 
-        $token = $user->createToken('dashboard-token')->plainTextToken;
+        $user->image_url = $user->image ?: null;
+
+
+        // =================================================
+        // TOKEN SANCTUM
+        // =================================================
+
+        $token = $user
+            ->createToken('dashboard-token')
+            ->plainTextToken;
+
 
         return response()->json([
             'status' => 'success',
             'message' => 'Inscription réussie',
             'token' => $token,
             'user' => $user,
-        ], 201);
+        ], 201, [], JSON_UNESCAPED_UNICODE);
     }
 
 
@@ -60,98 +123,135 @@ class AuthController extends Controller
     // CONNEXION
     // =====================================================
 
-public function login(Request $request)
-{
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required|string',
-    ]);
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
 
-    // =================================================
-    // PROTECTION CONTRE LES TENTATIVES RÉPÉTÉES
-    // 5 tentatives maximum par minute
-    // par IP + adresse email
-    // =================================================
 
-    $email = Str::lower($request->email);
-    $key = 'login|' . $request->ip() . '|' . $email;
+        // =================================================
+        // PROTECTION CONTRE LES TENTATIVES RÉPÉTÉES
+        // =================================================
 
-    if (RateLimiter::tooManyAttempts($key, 5)) {
-        $seconds = RateLimiter::availableIn($key);
+        $email = Str::lower($request->email);
+
+        $key =
+            'login|' .
+            $request->ip() .
+            '|' .
+            $email;
+
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+
+            $seconds = RateLimiter::availableIn($key);
+
+            return response()->json([
+                'status' => 'error',
+                'message' =>
+                    'Trop de tentatives. Veuillez réessayer dans ' .
+                    $seconds .
+                    ' secondes.',
+            ], 429);
+        }
+
+
+        // =================================================
+        // RECHERCHER L'UTILISATEUR
+        // =================================================
+
+        $user = User::where('email', $email)->first();
+
+
+        // =================================================
+        // VÉRIFIER LES IDENTIFIANTS
+        // =================================================
+
+        if (
+            !$user ||
+            !Hash::check(
+                $request->password,
+                $user->password
+            )
+        ) {
+
+            RateLimiter::hit($key, 60);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Email ou mot de passe incorrect',
+            ], 401);
+        }
+
+
+        // =================================================
+        // CONNEXION RÉUSSIE
+        // =================================================
+
+        RateLimiter::clear($key);
+
+
+        // =================================================
+        // SUPPRIMER LES ANCIENS TOKENS
+        // =================================================
+
+        $user->tokens()->delete();
+
+
+        // =================================================
+        // CRÉER UN NOUVEAU TOKEN
+        // =================================================
+
+        $token = $user
+            ->createToken('dashboard-token')
+            ->plainTextToken;
+
+
+        // =================================================
+        // IMAGE
+        // =================================================
+
+        $user->image_url = $user->image ?: null;
+
 
         return response()->json([
-            'status' => 'error',
-            'message' => 'Trop de tentatives. Veuillez réessayer dans ' . $seconds . ' secondes.',
-        ], 429);
+            'status' => 'success',
+            'message' => 'Connexion réussie',
+            'token' => $token,
+            'user' => $user,
+        ], 200, [], JSON_UNESCAPED_UNICODE);
     }
-
-    $user = User::where('email', $email)->first();
-
-    // Vérification des identifiants
-    if (!$user || !Hash::check($request->password, $user->password)) {
-
-        RateLimiter::hit($key, 60);
-
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Email ou mot de passe incorrect',
-        ], 401);
-    }
-
-    // Connexion réussie → réinitialiser le compteur
-    RateLimiter::clear($key);
-
-    // =================================================
-    // SUPPRIMER LES ANCIENS TOKENS
-    // =================================================
-
-    $user->tokens()->delete();
-
-    // =================================================
-    // CRÉER UN NOUVEAU TOKEN
-    // =================================================
-
-    $token = $user->createToken('dashboard-token')->plainTextToken;
-
-    // =================================================
-    // IMAGE
-    // =================================================
-
-    $user->image_url = $user->image
-        ? asset('storage/' . $user->image)
-        : null;
-
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Connexion réussie',
-        'token' => $token,
-        'user' => $user,
-    ]);
-}
-
 
 
     // =====================================================
     // UTILISATEUR PAR EMAIL
     // =====================================================
+
     public function userByEmail(Request $request)
-{
-    $request->validate([
-        'email' => 'required|email',
-    ]);
-
-    $user = User::where('email', $request->email)->first();
-
-    $imageUrl = $user && $user->image
-        ? asset('storage/' . $user->image)
-        : '/images/default-avatar2.webp';
-
-    return response()->json([
-        'image_url' => $imageUrl,
-    ]);
-}
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
 
 
+        $user = User::where(
+            'email',
+            $request->email
+        )->first();
+
+
+        $imageUrl =
+            $user && $user->image
+                ? $user->image
+                : '/images/default-avatar2.webp';
+
+
+        return response()->json([
+            'image_url' => $imageUrl,
+        ], 200, [], JSON_UNESCAPED_UNICODE);
+    }
 
 
     // =====================================================
@@ -162,19 +262,29 @@ public function login(Request $request)
     {
         $user = $request->user();
 
+
         if (!$user) {
+
             return response()->json([
-                'message' => 'Utilisateur non authentifié',
+                'message' =>
+                    'Utilisateur non authentifié',
             ], 401);
         }
 
-        $user->image_url = $user->image
-            ? asset('storage/' . $user->image)
-            : null;
+
+        // =================================================
+        // IMAGE
+        // =================================================
+
+        $user->image_url =
+            $user->image
+                ? $user->image
+                : null;
+
 
         return response()->json([
             'user' => $user,
-        ]);
+        ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 
 
@@ -186,14 +296,19 @@ public function login(Request $request)
     {
         $user = $request->user();
 
+
         if ($user) {
+
             // Supprimer uniquement le token utilisé
-            $currentToken = $user->currentAccessToken();
+            $currentToken =
+                $user->currentAccessToken();
+
 
             if ($currentToken) {
                 $currentToken->delete();
             }
         }
+
 
         return response()->json([
             'status' => 'success',
@@ -212,16 +327,22 @@ public function login(Request $request)
             'email' => 'required|email',
         ]);
 
+
         $status = Password::sendResetLink(
             $request->only('email')
         );
 
+
         return $status === Password::RESET_LINK_SENT
+
             ? response()->json([
-                'message' => 'Lien de réinitialisation envoyé à votre email',
+                'message' =>
+                    'Lien de réinitialisation envoyé à votre email',
             ])
+
             : response()->json([
-                'error' => 'Impossible d’envoyer le lien',
+                'error' =>
+                    'Impossible d’envoyer le lien',
             ], 400);
     }
 
@@ -238,6 +359,7 @@ public function login(Request $request)
             'password' => 'required|min:8|confirmed',
         ]);
 
+
         $status = Password::reset(
             $request->only(
                 'email',
@@ -245,25 +367,32 @@ public function login(Request $request)
                 'password_confirmation',
                 'token'
             ),
+
             function ($user, $password) {
 
                 $user->forceFill([
-                    'password' => Hash::make($password),
+                    'password' =>
+                        Hash::make($password),
                 ])->save();
 
+
                 // Sécurité :
-                // supprimer les anciens tokens après changement
-                // de mot de passe.
+                // supprimer les anciens tokens
                 $user->tokens()->delete();
             }
         );
 
+
         return $status === Password::PASSWORD_RESET
+
             ? response()->json([
-                'message' => 'Mot de passe réinitialisé avec succès',
+                'message' =>
+                    'Mot de passe réinitialisé avec succès',
             ])
+
             : response()->json([
-                'error' => 'Token invalide ou expiré',
+                'error' =>
+                    'Token invalide ou expiré',
             ], 400);
     }
 }
