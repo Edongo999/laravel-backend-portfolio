@@ -4,7 +4,6 @@ return [
 
     'paths' => [
         'api/*',
-        'sanctum/csrf-cookie',
         'login',
         'logout',
     ],
@@ -14,7 +13,7 @@ return [
     'allowed_origins' => [
         'http://localhost:5173',
         'http://localhost:5174',
-        'https://dasbordportfolio.vercel.app', //  ajoute ton domaine Vercel
+        'https://dasbordportfolio.vercel.app', // ton domaine Vercel
         'https://portfolio-frank-landry.vercel.app', // ✅ ton vrai domaine Vercel
     ],
 
@@ -24,5 +23,5 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true, //  obligatoire pour cookies httpOnly
+    'supports_credentials' => false, // ❌ plus besoin de cookies CSRF
 ];

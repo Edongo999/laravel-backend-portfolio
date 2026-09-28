@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Laravel\Sanctum\Http\Middleware\AuthenticateSession;
 
 return [
@@ -11,23 +9,20 @@ return [
     | Stateful Domains
     |--------------------------------------------------------------------------
     |
-    | Domaines autorisés à utiliser l'authentification
-    | par session/cookie avec Sanctum.
+    | Comme tu utilises désormais les tokens Bearer,
+    | tu n’as plus besoin de configurer les domaines stateful.
     |
     */
 
-    'stateful' => explode(
-        ',',
-        env(
-            'SANCTUM_STATEFUL_DOMAINS',
-            'localhost,127.0.0.1'
-        )
-    ),
+    'stateful' => [],
 
     /*
     |--------------------------------------------------------------------------
     | Sanctum Guards
     |--------------------------------------------------------------------------
+    |
+    | Tu peux garder "web" ou ajouter "api" selon ton usage.
+    |
     */
 
     'guard' => ['web'],
@@ -37,8 +32,8 @@ return [
     | Expiration Minutes
     |--------------------------------------------------------------------------
     |
-    | Concerne les tokens Sanctum.
-    | Les sessions Laravel ne sont pas concernées par cette valeur.
+    | Durée de vie des tokens générés par Sanctum.
+    | Exemple : 1440 minutes = 24 heures.
     |
     */
 
@@ -56,12 +51,14 @@ return [
     |--------------------------------------------------------------------------
     | Sanctum Middleware
     |--------------------------------------------------------------------------
+    |
+    | Comme tu n’utilises plus les cookies CSRF,
+    | tu peux garder uniquement AuthenticateSession.
+    |
     */
 
     'middleware' => [
         'authenticate_session' => AuthenticateSession::class,
-        'encrypt_cookies' => EncryptCookies::class,
-        'validate_csrf_token' => ValidateCsrfToken::class,
     ],
 
 ];
