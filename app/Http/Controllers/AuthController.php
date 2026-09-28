@@ -95,12 +95,6 @@ class AuthController extends Controller
 
         $user->image_url = $user->image ?: null;
 
-        // =================================================
-        // PAS DE TOKEN
-        // =================================================
-        // L'authentification utilise désormais
-        // les sessions Laravel + cookies HttpOnly.
-
         return response()->json([
             'status' => 'success',
             'message' => 'Inscription réussie',
@@ -177,12 +171,19 @@ class AuthController extends Controller
 
         RateLimiter::clear($key);
 
-        // Authentification par session Laravel
-        auth()->login($user);
+        // =================================================
+        // TOKEN SANCTUM
+        // =================================================
+        //
+        // On supprime les anciens tokens de connexion
+        // pour éviter d'accumuler des tokens actifs.
+        //
 
-        // Régénération de l'identifiant de session
-        // pour éviter la fixation de session.
-        $request->session()->regenerate();
+        $user->tokens()->delete();
+
+        $token = $user
+            ->createToken('dashboard-token')
+            ->plainTextToken;
 
         // =================================================
         // IMAGE
@@ -190,9 +191,14 @@ class AuthController extends Controller
 
         $user->image_url = $user->image ?: null;
 
+        // =================================================
+        // RÉPONSE
+        // =================================================
+
         return response()->json([
             'status' => 'success',
             'message' => 'Connexion réussie',
+            'token' => $token,
             'user' => $user,
         ], 200, [], JSON_UNESCAPED_UNICODE);
     }
@@ -260,14 +266,17 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        // Déconnexion de la session Laravel
-        auth()->logout();
+        $user = $request->user();
 
-        // Invalider complètement la session
-        $request->session()->invalidate();
+        if ($user) {
 
-        // Générer un nouveau token CSRF
-        $request->session()->regenerateToken();
+            // Supprimer uniquement le token utilisé
+            $currentToken = $user->currentAccessToken();
+
+            if ($currentToken) {
+                $currentToken->delete();
+            }
+        }
 
         return response()->json([
             'status' => 'success',
@@ -331,8 +340,7 @@ class AuthController extends Controller
                         Hash::make($password),
                 ])->save();
 
-                // Les anciens tokens Sanctum ne sont plus
-                // utilisés par l'authentification actuelle.
+                // Révoquer tous les anciens tokens
                 $user->tokens()->delete();
             }
         );
