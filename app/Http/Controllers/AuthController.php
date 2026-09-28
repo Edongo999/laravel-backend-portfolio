@@ -119,111 +119,91 @@ class AuthController extends Controller
     }
 
 
-    // =====================================================
+      // =====================================================
     // CONNEXION
     // =====================================================
+public function login(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required|string',
+    ]);
 
-    public function login(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
+    // =================================================
+    // PROTECTION CONTRE LES TENTATIVES RÉPÉTÉES
+    // =================================================
 
+    $email = Str::lower($request->email);
 
-        // =================================================
-        // PROTECTION CONTRE LES TENTATIVES RÉPÉTÉES
-        // =================================================
+    $key =
+        'login|' .
+        $request->ip() .
+        '|' .
+        $email;
 
-        $email = Str::lower($request->email);
+    if (RateLimiter::tooManyAttempts($key, 5)) {
 
-        $key =
-            'login|' .
-            $request->ip() .
-            '|' .
-            $email;
-
-
-        if (RateLimiter::tooManyAttempts($key, 5)) {
-
-            $seconds = RateLimiter::availableIn($key);
-
-            return response()->json([
-                'status' => 'error',
-                'message' =>
-                    'Trop de tentatives. Veuillez réessayer dans ' .
-                    $seconds .
-                    ' secondes.',
-            ], 429);
-        }
-
-
-        // =================================================
-        // RECHERCHER L'UTILISATEUR
-        // =================================================
-
-        $user = User::where('email', $email)->first();
-
-
-        // =================================================
-        // VÉRIFIER LES IDENTIFIANTS
-        // =================================================
-
-        if (
-            !$user ||
-            !Hash::check(
-                $request->password,
-                $user->password
-            )
-        ) {
-
-            RateLimiter::hit($key, 60);
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Email ou mot de passe incorrect',
-            ], 401);
-        }
-
-
-        // =================================================
-        // CONNEXION RÉUSSIE
-        // =================================================
-
-        RateLimiter::clear($key);
-
-
-        // =================================================
-        // SUPPRIMER LES ANCIENS TOKENS
-        // =================================================
-
-        $user->tokens()->delete();
-
-
-        // =================================================
-        // CRÉER UN NOUVEAU TOKEN
-        // =================================================
-
-        $token = $user
-            ->createToken('dashboard-token')
-            ->plainTextToken;
-
-
-        // =================================================
-        // IMAGE
-        // =================================================
-
-        $user->image_url = $user->image ?: null;
-
+        $seconds = RateLimiter::availableIn($key);
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Connexion réussie',
-            'token' => $token,
-            'user' => $user,
-        ], 200, [], JSON_UNESCAPED_UNICODE);
+            'status' => 'error',
+            'message' =>
+                'Trop de tentatives. Veuillez réessayer dans ' .
+                $seconds .
+                ' secondes.',
+        ], 429);
     }
 
+    // =================================================
+    // RECHERCHER L'UTILISATEUR
+    // =================================================
+
+    $user = User::where('email', $email)->first();
+
+    // =================================================
+    // VÉRIFIER LES IDENTIFIANTS
+    // =================================================
+
+    if (
+        !$user ||
+        !Hash::check(
+            $request->password,
+            $user->password
+        )
+    ) {
+
+        RateLimiter::hit($key, 60);
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Email ou mot de passe incorrect',
+        ], 401);
+    }
+
+    // =================================================
+    // CONNEXION RÉUSSIE
+    // =================================================
+
+    RateLimiter::clear($key);
+
+    // Créer une session Laravel sécurisée
+    $request->session()->regenerate();
+
+    // Authentifier l'utilisateur dans la session
+    auth()->login($user);
+
+    // =================================================
+    // IMAGE
+    // =================================================
+
+    $user->image_url = $user->image ?: null;
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Connexion réussie',
+        'user' => $user,
+    ], 200, [], JSON_UNESCAPED_UNICODE);
+}
 
     // =====================================================
     // UTILISATEUR PAR EMAIL
