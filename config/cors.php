@@ -2,26 +2,84 @@
 
 return [
 
+    /*
+    |--------------------------------------------------------------------------
+    | CORS Paths
+    |--------------------------------------------------------------------------
+    */
+
     'paths' => [
         'api/*',
-        'login',
-        'logout',
     ],
 
-    'allowed_methods' => ['*'],
+    /*
+    |--------------------------------------------------------------------------
+    | Allowed Methods
+    |--------------------------------------------------------------------------
+    */
+
+    'allowed_methods' => [
+        'GET',
+        'POST',
+        'PUT',
+        'PATCH',
+        'DELETE',
+        'OPTIONS',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allowed Origins
+    |--------------------------------------------------------------------------
+    */
 
     'allowed_origins' => [
         'http://localhost:5173',
         'http://localhost:5174',
-        'https://dasbordportfolio.vercel.app', // ton domaine Vercel
-        'https://portfolio-frank-landry.vercel.app', // ✅ ton vrai domaine Vercel
+        'https://dasbordportfolio.vercel.app',
+        'https://portfolio-frank-landry.vercel.app',
     ],
 
-    'allowed_headers' => ['*'],
+    /*
+    |--------------------------------------------------------------------------
+    | Allowed Headers
+    |--------------------------------------------------------------------------
+    */
+
+    'allowed_headers' => [
+        'Accept',
+        'Authorization',
+        'Content-Type',
+        'Origin',
+        'X-Requested-With',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Exposed Headers
+    |--------------------------------------------------------------------------
+    */
 
     'exposed_headers' => [],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cache
+    |--------------------------------------------------------------------------
+    */
+
     'max_age' => 0,
 
-    'supports_credentials' => false, // ❌ plus besoin de cookies CSRF
+    /*
+    |--------------------------------------------------------------------------
+    | Credentials
+    |--------------------------------------------------------------------------
+    |
+    | false car l'authentification utilise Bearer Token
+    | et non des cookies.
+    |
+    */
+
+    'supports_credentials' => false,
+
 ];

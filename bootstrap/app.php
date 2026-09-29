@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\SecurityHeaders;
 
 return Application::configure(basePath: dirname(__DIR__))
 
@@ -14,12 +15,27 @@ return Application::configure(basePath: dirname(__DIR__))
     )
 
     ->withMiddleware(function (Middleware $middleware) {
-        // ❌ Supprimé : $middleware->statefulApi();
-        // ✅ Tu utilises uniquement les tokens Bearer
+
+        // =====================================================
+        // AUTHENTIFICATION BEARER TOKEN
+        // =====================================================
+        // Pas de statefulApi() :
+        // l'application utilise Sanctum + Bearer Token.
+        //
+
+        // =====================================================
+        // MIDDLEWARE PERSONNALISÉS
+        // =====================================================
 
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         ]);
+
+        // =====================================================
+        // SECURITY HEADERS
+        // =====================================================
+
+        $middleware->append(SecurityHeaders::class);
     })
 
     ->withExceptions(function (Exceptions $exceptions) {
