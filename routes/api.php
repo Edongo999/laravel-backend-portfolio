@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ChatController;
 
 // =====================================================
 // AUTHENTIFICATION
@@ -19,6 +20,10 @@ Route::post('/user-by-email', [AuthController::class, 'userByEmail']);
 // ARTICLES PUBLICS (Portfolio) → EN DEHORS DU MIDDLEWARE
 // =====================================================
 Route::get('/articles/public', [ArticleController::class, 'publicIndex']);
+// =====================================================
+// CHAT IA PUBLIC (Portfolio)
+// =====================================================
+Route::post('/chat', [ChatController::class, 'chat']);
 
 // =====================================================
 // ROUTES PROTÉGÉES PAR SANCTUM
