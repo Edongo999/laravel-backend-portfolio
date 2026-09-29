@@ -38,7 +38,7 @@ public function index(Request $request)
 // =====================================================
 public function publicIndex(Request $request)
 {
-    $lang = $request->get('lang', 'fr'); // par défaut français
+    $lang = $request->get('lang', 'fr');
 
     $articles = Article::where('archived', 0)
         ->orderBy('created_at', 'desc')
@@ -47,23 +47,29 @@ public function publicIndex(Request $request)
     $articles = $articles->map(function ($article) use ($lang) {
         return [
             'id' => $article->id,
+
             'title' => $lang === 'en'
                 ? ($article->title_en ?? $article->title_fr ?? $article->title)
                 : ($article->title_fr ?? $article->title),
+
             'content' => $lang === 'en'
                 ? ($article->content_en ?? $article->content_fr ?? $article->content)
                 : ($article->content_fr ?? $article->content),
+
             'category' => $article->category,
-            // ✅ URL complète vers l’image
-            'image' => $article->image
-                ? asset('storage/' . $article->image)
-                : null,
+
+            // ✅ L'URL Supabase est déjà complète
+            'image' => $article->image ?: null,
+
             'created_at' => $article->created_at,
         ];
     });
 
-    return response()->json(['data' => $articles], 200, [], JSON_UNESCAPED_UNICODE);
+    return response()->json([
+        'data' => $articles
+    ], 200, [], JSON_UNESCAPED_UNICODE);
 }
+
 
 
 // =====================================================
