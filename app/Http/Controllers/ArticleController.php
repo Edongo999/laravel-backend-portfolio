@@ -33,43 +33,36 @@ public function index(Request $request)
 }
 
 
+
 // =====================================================
 // LISTE SIMPLE (Portfolio public) - Supabase Storage
-// =====================================================
-public function publicIndex(Request $request)
-{
-    $lang = $request->get('lang', 'fr');
+    // =====================================================
+    public function publicIndex(Request $request)
+    {
+        $lang = $request->get('lang', 'fr'); // par défaut français
 
-    $articles = Article::where('archived', 0)
-        ->orderBy('created_at', 'desc')
-        ->get();
+        $articles = Article::where('archived', 0)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    $articles = $articles->map(function ($article) use ($lang) {
-        return [
-            'id' => $article->id,
+        $articles = $articles->map(function ($article) use ($lang) {
+            return [
+                'id' => $article->id,
+                // ✅ Fallback : si la traduction est vide, on prend la version FR ou le champ original
+                'title' => $lang === 'en'
+                    ? ($article->title_en ?? $article->title_fr ?? $article->title)
+                    : ($article->title_fr ?? $article->title),
+                'content' => $lang === 'en'
+                    ? ($article->content_en ?? $article->content_fr ?? $article->content)
+                    : ($article->content_fr ?? $article->content),
+                'category' => $article->category,
+                'image' => $article->image,
+                'created_at' => $article->created_at,
+            ];
+        });
 
-            'title' => $lang === 'en'
-                ? ($article->title_en ?? $article->title_fr ?? $article->title)
-                : ($article->title_fr ?? $article->title),
-
-            'content' => $lang === 'en'
-                ? ($article->content_en ?? $article->content_fr ?? $article->content)
-                : ($article->content_fr ?? $article->content),
-
-            'category' => $article->category,
-
-            // ✅ L'URL Supabase est déjà complète
-            'image' => $article->image ?: null,
-
-            'created_at' => $article->created_at,
-        ];
-    });
-
-    return response()->json([
-        'data' => $articles
-    ], 200, [], JSON_UNESCAPED_UNICODE);
-}
-
+        return response()->json(['data' => $articles], 200);
+    }
 
 
 // =====================================================
@@ -202,6 +195,49 @@ public function update(Request $request, Article $article)
         'message' => 'Article modifié avec succès',
         'article' => $article->fresh(),
     ], 200, [], JSON_UNESCAPED_UNICODE);
+}
+
+// =====================================================
+// TRADUIRE UN ARTICLE EN ANGLAIS
+// =====================================================
+public function translate(Article $article)
+{
+    try {
+        $trEn = new GoogleTranslate('en');
+
+        // S'assurer que le français existe
+        $article->title_fr = $article->title;
+        $article->content_fr = $article->content;
+
+        // Traduction du titre
+        $article->title_en = $trEn->translate(
+            $article->title_fr
+        );
+
+        // Traduction du contenu
+        $article->content_en = $trEn->translate(
+            $article->content_fr
+        );
+
+        $article->save();
+
+        return response()->json([
+            'message' => 'Article traduit avec succès',
+            'article' => $article->fresh(),
+        ], 200);
+
+    } catch (\Throwable $e) {
+
+        \Log::error('Erreur de traduction', [
+            'article_id' => $article->id,
+            'error' => $e->getMessage(),
+        ]);
+
+        return response()->json([
+            'message' => 'Impossible de traduire l’article.',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
 }
 
    // =====================================================
