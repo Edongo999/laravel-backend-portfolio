@@ -7,55 +7,39 @@ use RuntimeException;
 
 class GeminiService
 {
+    protected $apiKey;
+
+    public function __construct()
+    {
+        $this->apiKey = env('GEMINI_API_KEY');
+    }
+
     public function generateResponse(string $message): string
     {
-        $apiKey = config('services.gemini.api_key');
-
-        if (!$apiKey) {
-            throw new RuntimeException(
-                'La clé API Gemini n\'est pas configurée.'
-            );
-        }
-
         $response = Http::timeout(60)
             ->withHeaders([
                 'Content-Type' => 'application/json',
-                'x-goog-api-key' => $apiKey,
+                'x-goog-api-key' => $this->apiKey,
             ])
             ->post(
-                'https://generativelanguage.googleapis.com/v1beta/interactions',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
                 [
-                    'model' => 'gemini-3.8-flash',
-                    'input' => $message,
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $message]
+                            ]
+                        ]
+                    ]
                 ]
             );
 
         if ($response->failed()) {
-            throw new RuntimeException(
-                'Erreur Gemini : ' . $response->body()
-            );
+            throw new RuntimeException("Erreur Gemini : " . $response->body());
         }
 
-        /*
-         * La réponse de l'Interactions API contient
-         * les étapes de l'interaction.
-         */
-        $steps = $response->json('steps', []);
+        $data = $response->json();
 
-        foreach ($steps as $step) {
-            if (($step['type'] ?? null) !== 'model_output') {
-                continue;
-            }
-
-            foreach ($step['content'] ?? [] as $content) {
-                if (($content['type'] ?? null) === 'text') {
-                    return $content['text'];
-                }
-            }
-        }
-
-        throw new RuntimeException(
-            'Gemini n\'a retourné aucune réponse texte.'
-        );
+        return $data['candidates'][0]['content']['parts'][0]['text'] ?? 'Pas de réponse générée.';
     }
 }
