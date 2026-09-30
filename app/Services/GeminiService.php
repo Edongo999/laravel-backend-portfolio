@@ -16,23 +16,21 @@ class GeminiService
 
     public function generateResponse(string $message): string
     {
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={$this->apiKey}";
+
         $response = Http::timeout(60)
             ->withHeaders([
                 'Content-Type' => 'application/json',
-                'x-goog-api-key' => $this->apiKey,
             ])
-            ->post(
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
-                [
-                    'contents' => [
-                        [
-                            'parts' => [
-                                ['text' => $message]
-                            ]
+            ->post($url, [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => $message]
                         ]
                     ]
                 ]
-            );
+            ]);
 
         if ($response->failed()) {
             throw new RuntimeException("Erreur Gemini : " . $response->body());
