@@ -23,8 +23,17 @@ class ChatController extends Controller
         $message = strtolower($validated['message']);
 
         try {
-            // Charger ton fichier JSON
-            $data = json_decode(file_get_contents(resource_path('lang/fr.json')), true);
+            // Charger ton fichier JSON en sécurité
+            $filePath = resource_path('lang/fr.json');
+            $data = [];
+
+            if (file_exists($filePath)) {
+                $json = file_get_contents($filePath);
+                $decoded = json_decode($json, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $data = $decoded;
+                }
+            }
 
             $response = null;
 
@@ -51,21 +60,25 @@ class ChatController extends Controller
             elseif (str_contains($message, 'compétence')
                 || str_contains($message, 'skills')
                 || str_contains($message, 'savoir-faire')) {
-                $skills = implode("\n- ", $data['skills']);
+                $skills = !empty($data['skills']) ? implode("\n- ", $data['skills']) : 'Non spécifiées';
                 $response = "Les principales compétences de Frank Landry sont :\n- " . $skills;
             }
             // Projets
             elseif (str_contains($message, 'projet')
                 || str_contains($message, 'réalisation')
                 || str_contains($message, 'travaux')) {
-                $projects = array_map(fn($p) => $p['title'] . " → " . $p['tools'], $data['projects']);
+                $projects = !empty($data['projects'])
+                    ? array_map(fn($p) => $p['title'] . " → " . $p['tools'], $data['projects'])
+                    : ['Aucun projet disponible'];
                 $response = "Voici quelques projets réalisés :\n- " . implode("\n- ", $projects);
             }
             // Expériences
             elseif (str_contains($message, 'expérience')
                 || str_contains($message, 'parcours')
                 || str_contains($message, 'formation')) {
-                $experiences = array_map(fn($e) => $e['title'] . " (" . $e['date'] . ")", $data['experience']);
+                $experiences = !empty($data['experience'])
+                    ? array_map(fn($e) => $e['title'] . " (" . $e['date'] . ")", $data['experience'])
+                    : ['Aucune expérience disponible'];
                 $response = "Son parcours inclut :\n- " . implode("\n- ", $experiences);
             }
             // Contact
@@ -73,10 +86,11 @@ class ChatController extends Controller
                 || str_contains($message, 'email')
                 || str_contains($message, 'téléphone')
                 || str_contains($message, 'joindre')) {
+                $contact = $data['contact'] ?? [];
                 $response = "Vous pouvez contacter Frank Landry :\n"
-                          . "- Email : " . $data['contact']['email'] . "\n"
-                          . "- Téléphone : " . $data['contact']['phone'] . "\n"
-                          . "- Localisation : " . $data['contact']['location'];
+                          . "- Email : " . ($contact['email'] ?? 'Non disponible') . "\n"
+                          . "- Téléphone : " . ($contact['phone'] ?? 'Non disponible') . "\n"
+                          . "- Localisation : " . ($contact['location'] ?? 'Non disponible');
             }
 
             // Si aucune correspondance → IA Gemini
