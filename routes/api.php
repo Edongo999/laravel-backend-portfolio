@@ -24,7 +24,38 @@ Route::get('/articles/public', [ArticleController::class, 'publicIndex']);
 // CHAT IA PUBLIC (Portfolio)
 // =====================================================
 Route::post('/chat', [ChatController::class, 'chat']);
+// =====================================================
+// CHAT IA PUBLIC (Portfolio)
+// =====================================================
+Route::post('/chat', [ChatController::class, 'chat']);
 
+// =====================================================
+// PROFIL PUBLIC (JSON résumé)
+// =====================================================
+Route::get('/about', function () {
+    $data = json_decode(file_get_contents(resource_path('lang/fr.json')), true);
+    return response()->json($data['about']);
+});
+
+Route::get('/skills', function () {
+    $data = json_decode(file_get_contents(resource_path('lang/fr.json')), true);
+    return response()->json($data['skills']);
+});
+
+Route::get('/projects', function () {
+    $data = json_decode(file_get_contents(resource_path('lang/fr.json')), true);
+    return response()->json($data['projects']);
+});
+
+Route::get('/experience', function () {
+    $data = json_decode(file_get_contents(resource_path('lang/fr.json')), true);
+    return response()->json($data['experience']);
+});
+
+Route::get('/contact', function () {
+    $data = json_decode(file_get_contents(resource_path('lang/fr.json')), true);
+    return response()->json($data['contact']);
+});
 // =====================================================
 // ROUTES PROTÉGÉES PAR SANCTUM
 // =====================================================
