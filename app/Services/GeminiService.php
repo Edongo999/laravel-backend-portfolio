@@ -41,3 +41,6 @@ class GeminiService
         return $data['candidates'][0]['content']['parts'][0]['text'] ?? 'Pas de réponse générée.';
     }
 }
+
+
+

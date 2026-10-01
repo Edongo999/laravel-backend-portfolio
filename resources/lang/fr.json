@@ -1,0 +1,66 @@
+{
+  "about": {
+    "summary": "Je suis Frank Landry, développeur web Full Stack passionné par la création de sites et d’applications modernes. J’allie technique et créativité pour concevoir des solutions fiables et adaptées aux besoins des utilisateurs."
+  },
+
+  "skills": [
+    "React.js",
+    "Laravel",
+    "Tailwind CSS",
+    "Supabase",
+    "Photoshop",
+    "Illustrator"
+  ],
+
+  "projects": [
+    {
+      "title": "111Studio – Site vitrine",
+      "description": "Site vitrine moderne développé pour une entreprise de photographie spécialisée dans les mariages.",
+      "tools": "React.js, Tailwind CSS, Vercel"
+    },
+    {
+      "title": "Portfolio marketing digital",
+      "description": "Portfolio moderne conçu pour présenter les services d’une professionnelle du marketing digital.",
+      "tools": "React.js, Tailwind CSS, Vercel"
+    },
+    {
+      "title": "Application compression images",
+      "description": "Application web moderne permettant de compresser et convertir facilement des fichiers multimédias.",
+      "tools": "React.js, Tailwind CSS, Vercel"
+    },
+    {
+      "title": "Admin Dashboard",
+      "description": "Dashboard moderne et responsive réalisé lors d’un test technique pour afficher des statistiques.",
+      "tools": "React.js, Tailwind CSS, Recharts"
+    }
+  ],
+
+  "experience": [
+    {
+      "title": "Formateur en bureautique, design et maintenance",
+      "place": "Centre Joseph & Julienne – Douala",
+      "date": "Juillet - Septembre 2026"
+    },
+    {
+      "title": "Licence en Génie Logiciel",
+      "place": "Institut Universitaire de Technologie de Douala",
+      "date": "2024 - 2025"
+    },
+    {
+      "title": "Stage FECACFOP",
+      "place": "Développement Fullstack PHP/MySQL",
+      "date": "Mars - Juin 2025"
+    },
+    {
+      "title": "Stage HGOPED",
+      "place": "Application desktop Java",
+      "date": "2023 - 2024"
+    }
+  ],
+
+  "contact": {
+    "email": "landryamengne@gmail.com",
+    "phone": "+237 659 322 137",
+    "location": "Douala, Cameroun"
+  }
+}
