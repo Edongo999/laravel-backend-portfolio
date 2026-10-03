@@ -1,60 +1,119 @@
 {
   "about": {
-    "summary": "I am Frank Landry, a Full Stack web developer passionate about creating modern websites and applications. I combine technical expertise and creativity to design reliable solutions tailored to user needs."
+    "name": "Frank Landry",
+    "title": "Full Stack Developer • Graphic Designer • IT Technician • Trainer",
+    "summary": "Frank Landry is a Full Stack Developer passionate about designing and developing modern digital solutions. He develops websites and web applications, working on both frontend and backend development. His background has also allowed him to develop additional skills in graphic design, IT maintenance and training. He enjoys transforming ideas and needs into concrete, functional solutions adapted to users. Through his projects and activities, he combines development, creativity and a practical approach to provide useful and professional digital solutions."
   },
 
   "skills": [
+    "Full Stack Development",
+    "Frontend Development",
+    "Backend Development",
     "React.js",
     "Laravel",
+    "PHP",
+    "JavaScript",
+    "TypeScript",
     "Tailwind CSS",
     "Supabase",
+    "REST API",
+    "Git and GitHub",
+    "Vercel",
+    "Graphic Design",
     "Photoshop",
-    "Illustrator"
+    "Illustrator",
+    "Logo Design",
+    "Flyer and Poster Design",
+    "IT Maintenance",
+    "Trainer"
   ],
 
   "projects": [
     {
-      "title": "111Studio – Showcase Website",
-      "description": "A modern showcase website developed for a photography company specializing in weddings.",
+      "title": "Frank Landry Professional Portfolio",
+      "description": "Professional portfolio developed to present Frank Landry's profile, skills, services, experience and projects. The project also includes an administration area for content management and a virtual assistant.",
+      "tools": "React.js, TypeScript, Tailwind CSS, Laravel, Supabase, Vercel"
+    },
+    {
+      "title": "111Studio – Business Website",
+      "description": "Modern business website developed for a photography company specializing in weddings. The website presents the company's activity, services and work.",
       "tools": "React.js, Tailwind CSS, Vercel"
     },
     {
       "title": "Digital Marketing Portfolio",
-      "description": "A modern portfolio designed to present the services of a digital marketing professional.",
+      "description": "Modern portfolio designed to present the services and work of a digital marketing professional.",
       "tools": "React.js, Tailwind CSS, Vercel"
     },
     {
-      "title": "Image Compression Application",
-      "description": "A modern web application that allows easy compression and conversion of multimedia files.",
+      "title": "Image Compression and Conversion Application",
+      "description": "Web application allowing users to easily compress and convert different multimedia files.",
       "tools": "React.js, Tailwind CSS, Vercel"
     },
     {
       "title": "Admin Dashboard",
-      "description": "A modern and responsive dashboard created during a technical test to display statistics.",
+      "description": "Modern responsive dashboard created as part of a technical test to display statistics and present data clearly.",
       "tools": "React.js, Tailwind CSS, Recharts"
     }
   ],
 
   "experience": [
     {
-      "title": "Trainer in Office Tools, Design and Maintenance",
+      "title": "Office Software, Design and IT Maintenance Trainer",
       "place": "Centre Joseph & Julienne – Douala",
       "date": "July - September 2026"
     },
     {
-      "title": "Bachelor’s Degree in Software Engineering",
-      "place": "University Institute of Technology of Douala",
+      "title": "Bachelor's Degree in Software Engineering",
+      "place": "Institut Universitaire de Technologie de Douala",
       "date": "2024 - 2025"
     },
     {
-      "title": "Internship at FECACFOP",
-      "place": "Fullstack PHP/MySQL Development",
+      "title": "FECACFOP Internship",
+      "place": "Full Stack PHP/MySQL Development",
       "date": "March - June 2025"
     },
     {
-      "title": "Internship at HGOPED",
-      "place": "Desktop Java Application",
+      "title": "HGOPED Internship",
+      "place": "Java Desktop Application Development",
       "date": "2023 - 2024"
+    }
+  ],
+
+  "services": [
+    {
+      "name": "Landing Page",
+      "description": "Creation of modern web pages to present an activity, product or service.",
+      "price": "From 50,000 FCFA"
+    },
+    {
+      "name": "Business Website",
+      "description": "Creation of professional websites for companies, businesses, services or portfolios.",
+      "price": "From 100,000 FCFA"
+    },
+    {
+      "name": "E-commerce Website",
+      "description": "Development of websites allowing businesses to present and sell products or services online.",
+      "price": "From 200,000 FCFA"
+    },
+    {
+      "name": "Logo Design",
+      "description": "Creation of logos adapted to the identity and activity of a company or project.",
+      "price": "From 5,000 FCFA"
+    },
+    {
+      "name": "Graphic Design",
+      "description": "Creation of flyers, posters, visual content and other communication materials.",
+      "price": "On request"
+    },
+    {
+      "name": "IT Maintenance",
+      "description": "IT maintenance and troubleshooting services.",
+      "price": "On request"
+    },
+    {
+      "name": "Training",
+      "description": "Training in office software, graphic design, web development and IT tools.",
+      "price": "On request"
     }
   ],
 

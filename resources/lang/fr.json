@@ -1,36 +1,57 @@
 {
   "about": {
-    "summary": "Je suis Frank Landry, développeur web Full Stack passionné par la création de sites et d’applications modernes. J’allie technique et créativité pour concevoir des solutions fiables et adaptées aux besoins des utilisateurs."
+    "name": "Frank Landry",
+    "title": "Développeur Full Stack • Designer Graphique • Technicien IT • Formateur",
+    "summary": "Frank Landry est un développeur Full Stack passionné par la conception et le développement de solutions numériques modernes. Il développe des sites et applications web en intervenant aussi bien sur le frontend que sur le backend. Son parcours lui a également permis de développer des compétences complémentaires en design graphique, maintenance informatique et formation. Il aime transformer les idées et les besoins en solutions concrètes, fonctionnelles et adaptées aux utilisateurs. À travers ses projets et ses activités, il cherche à combiner développement, créativité et approche pratique afin de proposer des solutions numériques utiles et professionnelles."
   },
 
   "skills": [
+    "Développement Full Stack",
+    "Développement frontend",
+    "Développement backend",
     "React.js",
     "Laravel",
+    "PHP",
+    "JavaScript",
+    "TypeScript",
     "Tailwind CSS",
     "Supabase",
+    "API REST",
+    "Git et GitHub",
+    "Vercel",
+    "Design graphique",
     "Photoshop",
-    "Illustrator"
+    "Illustrator",
+    "Création de logos",
+    "Création d'affiches et flyers",
+    "Maintenance informatique",
+    "Formateur"
   ],
 
   "projects": [
     {
+      "title": "Portfolio professionnel de Frank Landry",
+      "description": "Portfolio professionnel développé pour présenter le profil, les compétences, les services, les expériences et les réalisations de Frank Landry. Le projet intègre également un espace d'administration permettant de gérer les contenus du portfolio et un assistant virtuel.",
+      "tools": "React.js, TypeScript, Tailwind CSS, Laravel, Supabase, Vercel"
+    },
+    {
       "title": "111Studio – Site vitrine",
-      "description": "Site vitrine moderne développé pour une entreprise de photographie spécialisée dans les mariages.",
+      "description": "Site vitrine moderne développé pour une entreprise de photographie spécialisée dans les mariages. Le site permet de présenter l'activité, les services et les réalisations de l'entreprise.",
       "tools": "React.js, Tailwind CSS, Vercel"
     },
     {
       "title": "Portfolio marketing digital",
-      "description": "Portfolio moderne conçu pour présenter les services d’une professionnelle du marketing digital.",
+      "description": "Portfolio moderne conçu pour présenter les services et les réalisations d'une professionnelle du marketing digital.",
       "tools": "React.js, Tailwind CSS, Vercel"
     },
     {
-      "title": "Application compression images",
-      "description": "Application web moderne permettant de compresser et convertir facilement des fichiers multimédias.",
+      "title": "Application de compression et conversion d'images",
+      "description": "Application web permettant de compresser et de convertir facilement différents fichiers multimédias.",
       "tools": "React.js, Tailwind CSS, Vercel"
     },
     {
       "title": "Admin Dashboard",
-      "description": "Dashboard moderne et responsive réalisé lors d’un test technique pour afficher des statistiques.",
+      "description": "Dashboard moderne et responsive réalisé lors d'un test technique pour afficher des statistiques et présenter des données de manière claire.",
       "tools": "React.js, Tailwind CSS, Recharts"
     }
   ],
@@ -48,13 +69,51 @@
     },
     {
       "title": "Stage FECACFOP",
-      "place": "Développement Fullstack PHP/MySQL",
+      "place": "Développement Full Stack PHP/MySQL",
       "date": "Mars - Juin 2025"
     },
     {
       "title": "Stage HGOPED",
-      "place": "Application desktop Java",
+      "place": "Développement d'une application desktop Java",
       "date": "2023 - 2024"
+    }
+  ],
+
+  "services": [
+    {
+      "name": "Landing page",
+      "description": "Création de pages web modernes pour présenter une activité, un produit ou un service.",
+      "price": "À partir de 50 000 FCFA"
+    },
+    {
+      "name": "Site vitrine",
+      "description": "Création de sites professionnels pour présenter une entreprise, une activité, des services ou des réalisations.",
+      "price": "À partir de 100 000 FCFA"
+    },
+    {
+      "name": "Site e-commerce",
+      "description": "Développement de sites permettant de présenter et vendre des produits ou services en ligne.",
+      "price": "À partir de 200 000 FCFA"
+    },
+    {
+      "name": "Création de logo",
+      "description": "Conception de logos adaptés à l'identité et à l'activité d'une entreprise ou d'un projet.",
+      "price": "À partir de 5 000 FCFA"
+    },
+    {
+      "name": "Design graphique",
+      "description": "Création de flyers, affiches, visuels et autres supports de communication.",
+      "price": "Sur demande"
+    },
+    {
+      "name": "Maintenance informatique",
+      "description": "Interventions liées à la maintenance et au dépannage informatique.",
+      "price": "Sur demande"
+    },
+    {
+      "name": "Formation",
+      "description": "Formation en bureautique, design graphique, développement web et outils informatiques.",
+      "price": "Sur demande"
     }
   ],
 
