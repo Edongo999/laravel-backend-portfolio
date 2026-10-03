@@ -1,0 +1,66 @@
+{
+  "about": {
+    "summary": "I am Frank Landry, a Full Stack web developer passionate about creating modern websites and applications. I combine technical expertise and creativity to design reliable solutions tailored to user needs."
+  },
+
+  "skills": [
+    "React.js",
+    "Laravel",
+    "Tailwind CSS",
+    "Supabase",
+    "Photoshop",
+    "Illustrator"
+  ],
+
+  "projects": [
+    {
+      "title": "111Studio – Showcase Website",
+      "description": "A modern showcase website developed for a photography company specializing in weddings.",
+      "tools": "React.js, Tailwind CSS, Vercel"
+    },
+    {
+      "title": "Digital Marketing Portfolio",
+      "description": "A modern portfolio designed to present the services of a digital marketing professional.",
+      "tools": "React.js, Tailwind CSS, Vercel"
+    },
+    {
+      "title": "Image Compression Application",
+      "description": "A modern web application that allows easy compression and conversion of multimedia files.",
+      "tools": "React.js, Tailwind CSS, Vercel"
+    },
+    {
+      "title": "Admin Dashboard",
+      "description": "A modern and responsive dashboard created during a technical test to display statistics.",
+      "tools": "React.js, Tailwind CSS, Recharts"
+    }
+  ],
+
+  "experience": [
+    {
+      "title": "Trainer in Office Tools, Design and Maintenance",
+      "place": "Centre Joseph & Julienne – Douala",
+      "date": "July - September 2026"
+    },
+    {
+      "title": "Bachelor’s Degree in Software Engineering",
+      "place": "University Institute of Technology of Douala",
+      "date": "2024 - 2025"
+    },
+    {
+      "title": "Internship at FECACFOP",
+      "place": "Fullstack PHP/MySQL Development",
+      "date": "March - June 2025"
+    },
+    {
+      "title": "Internship at HGOPED",
+      "place": "Desktop Java Application",
+      "date": "2023 - 2024"
+    }
+  ],
+
+  "contact": {
+    "email": "landryamengne@gmail.com",
+    "phone": "+237 659 322 137",
+    "location": "Douala, Cameroon"
+  }
+}
