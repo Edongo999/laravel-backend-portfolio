@@ -25,9 +25,7 @@ Route::get('/articles/public', [ArticleController::class, 'publicIndex']);
 // =====================================================
 Route::post('/chat', [ChatController::class, 'chat']);
 // =====================================================
-// CHAT IA PUBLIC (Portfolio)
-// =====================================================
-Route::post('/chat', [ChatController::class, 'chat']);
+
 
 // =====================================================
 // PROFIL PUBLIC (JSON résumé)

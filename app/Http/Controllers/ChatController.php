@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChatbotConversation;
 use App\Services\GeminiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Throwable;
 
 class ChatController extends Controller
@@ -19,19 +21,50 @@ class ChatController extends Controller
         $validated = $request->validate([
             'message' => ['required', 'string', 'max:5000'],
             'lang' => ['nullable', 'string', 'in:fr,en'],
+            'session_id' => ['nullable', 'string', 'max:100'],
         ]);
 
         $originalMessage = trim($validated['message']);
         $message = mb_strtolower($originalMessage, 'UTF-8');
 
+        // Si le frontend n'envoie pas encore de session_id,
+        // Laravel en crée temporairement un.
+        $sessionId = $validated['session_id'] ?? (string) Str::uuid();
+
+        $lang = $validated['lang'] ?? $this->detectLanguage($message);
+
         try {
             /*
             |--------------------------------------------------------------------------
-            | Détection de la langue
+            | Conversation
             |--------------------------------------------------------------------------
             */
 
-            $lang = $validated['lang'] ?? $this->detectLanguage($message);
+            $conversation = ChatbotConversation::firstOrCreate(
+                [
+                    'session_id' => $sessionId,
+                ],
+                [
+                    'lang' => $lang,
+                    'status' => 'automated',
+                ]
+            );
+
+            // On garde la langue la plus récente utilisée.
+            $conversation->update([
+                'lang' => $lang,
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Enregistrement de la question du visiteur
+            |--------------------------------------------------------------------------
+            */
+
+            $conversation->messages()->create([
+                'role' => 'user',
+                'content' => $originalMessage,
+            ]);
 
             /*
             |--------------------------------------------------------------------------
@@ -56,9 +89,6 @@ class ChatController extends Controller
             /*
             |--------------------------------------------------------------------------
             | 1. PROJETS
-            |--------------------------------------------------------------------------
-            | Cette vérification vient avant "Frank Landry" afin d'éviter
-            | qu'une question contenant son nom soit classée comme "profil".
             |--------------------------------------------------------------------------
             */
 
@@ -190,8 +220,7 @@ class ChatController extends Controller
                     'coût',
                     'cout',
                     'price',
-                    'prices',
-                    'service'
+                    'prices'
                 ])
             ) {
                 $services = $data['services'] ?? [];
@@ -365,9 +394,27 @@ class ChatController extends Controller
                 );
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Enregistrement de la réponse du chatbot
+            |--------------------------------------------------------------------------
+            */
+
+            $conversation->messages()->create([
+                'role' => 'assistant',
+                'content' => $response,
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Réponse API
+            |--------------------------------------------------------------------------
+            */
+
             return response()->json([
                 'success' => true,
                 'message' => $response,
+                'session_id' => $sessionId,
             ]);
 
         } catch (Throwable $e) {
